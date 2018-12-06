@@ -4,12 +4,23 @@ class SettingCookiesApp
   def call(env)
     @request = Rack::Request.new(env)
     case @request.path
-      when "/" then Rack::Response.new(render("index.html.erb"))
+      when "/"
+        Rack::Response.new(render("index.html.erb"))
       when "/countme"
         Rack::Response.new do |response|
-          check = @request.cookies["count"].nil? ? 1 : @request.cookies["count"].to_i + 1
-          response.set_cookie("count", check)
+          new_count = @request.cookies["count"].nil? ? 1 : @request.cookies["count"].to_i + 1
+          response.set_cookie("count", new_count)
+          store_counter_in_file(new_count)
           response.redirect("/")
+          #render("index.html.erb")
+        end
+      when "/lowerme"
+        Rack::Response.new do |response|
+          new_count = @request.cookies["count"].nil? ? 1 : @request.cookies["count"].to_i - 1
+          response.set_cookie("count", new_count)
+          store_counter_in_file(new_count)
+          response.redirect("/")
+          #render("index.html.erb")
         end
       else Rack::Response.new("Not Found", 404)
       end
@@ -22,5 +33,12 @@ class SettingCookiesApp
 
   def count_cookie
     @request.cookies["count"] || "Something went wrong"
+  end
+
+  def store_counter_in_file(count_to_file)
+    counter_file = File.new('counterfile.txt', 'w')
+    counter_file.print "Page Refresh Count: "
+    counter_file.puts count_to_file
+    counter_file.close
   end
 end
